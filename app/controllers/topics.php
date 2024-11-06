@@ -2,12 +2,28 @@
 
 include  BASE_PATH . '\app\database\db.php';
 
-//  Отправка данных с формы в бд
+// ДЗ сделать вывод ошибок в массив.
 
 $alertMsg = '';
 $id = '';
 $name = '';
 $description = '';
+// Мінімальна довжина заголовка
+$titleMinLength = 2;
+// массив для сбора ошибок
+$errors = [];
+
+
+
+
+$errorsArray = [
+    'empty_fields_error' => 'заполните все поля',
+    'title_length_error' => 'длина заголовка должна быть более ' . $titleMinLength . ' символов',
+    'category_name_unique_error' => 'такая категория уже существует!',
+    'add_category_error' => 'не удалось добавить категорию категории!',
+    'empty_category_name_error' => 'имя категории не может быть пустым',
+    'category_update_error' => 'не удалось обновить категорию'
+];
 
 // добавление категории
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
@@ -20,41 +36,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         'description' => $description,
     ];
 
-    if ($name == '') {
-        $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        Введите имя категории!!!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                   </div>';
-    } elseif (!empty($checkNameUnique)) {
-        $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        Категория с таким именем уже существует!!!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                   </div>';
-    } elseif (mb_strlen($name, 'UTF8') < 3) {
-        $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        Имя категории должно быть более 2 символов!!!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                   </div>';
-    } else {
-        // Скидаємо `alertMsg` і додаємо категорію
-        $alertMsg = '';
+    // Проверка на заполненость поля имя категории
+    if ($name == '') { 
+        $errors[] = $errorsArray['empty_category_name_error'];
+    }
+
+    // Проверка на минимальную длину имени категории
+    if (mb_strlen($name, 'UTF8') < $titleMinLength) {
+        $errors[] = $errorsArray['title_length_error'];
+    }
+
+    // Проверка на наличие уникальности имени категории
+    if (!empty($checkNameUnique)) {
+        $errors[] = $errorsArray['category_name_unique_error'];
+    }
+
+    // Если массив ошибок пуст то вставляем категорию в бд 
+    if (empty($errors)) { 
         $insertTopic = insert('topics', $params);
         if ($insertTopic) {
-            // Відображення повідомлення про успішне додавання
-            $alertMsg = '<div class="alert alert-success alert-dismissible fade show" role="alert">
-                            Категория была успешно добавлена, вы будете перенаправлены на страницу всех категорий в течении 5 секунд.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>';
-            // echo $alertMsg;
-            header("Location:" . BASE_URL . 'admin/topics/index.php');
+            header("Location:". BASE_URL. 'admin/topics/index.php');
             exit();
         } else {
-            $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            Не удалось создать категорию.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>';
+            $errors[] = $errorsArray['add_category_error'];
         }
     }
+
+
 }
 
 
@@ -75,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
     $id = $_POST['id'];
-    tt($_POST['id']);
     $name = trim($_POST['name']);
     $description = trim($_POST['description']);
     $checkNameUnique = selectOne('topics', ['name' => $name]);
@@ -84,40 +91,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         'description' => $description,
     ];
 
-    if ($name == '') {
-        $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        Введите имя категории!!!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                   </div>';
-    } elseif (!empty($checkNameUnique)) {
-        $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        Категория с таким именем уже существует!!!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                   </div>';
-    } elseif (mb_strlen($name, 'UTF8') < 3) {
-        $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        Имя категории должно быть более 2 символов!!!
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                   </div>';
-    } else {
-        $alertMsg = '';
-        $insertTopic = update($id, 'topics', $params);
-        if ($insertTopic) {
-            // Відображення повідомлення про успішне додавання
-            $alertMsg = '<div class="alert alert-success alert-dismissible fade show" role="alert">
-                            Категория была успешно добавлена, вы будете перенаправлены на страницу всех категорий в течении 5 секунд.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>';
-            // echo $alertMsg;
-            header("Location:" . BASE_URL . 'admin/topics/index.php');
+    // Проверка на заполненость поля имя категории
+    if ($name == '') { 
+        $errors[] = $errorsArray['empty_category_name_error'];
+    }
+
+    // Проверка на минимальную длину имени категории
+    if (mb_strlen($name, 'UTF8') < $titleMinLength) {
+        $errors[] = $errorsArray['title_length_error'];
+    }
+
+    // Проверка на наличие уникальности имени категории
+    if (!empty($checkNameUnique)) {
+        $errors[] = $errorsArray['category_name_unique_error'];
+    }
+
+    // Если массив ошибок пуст то редактируем категорию в бд
+    if (empty($errors)) {
+        $updateTopic = update($id, 'topics', $params);
+        if ($updateTopic) {
+            header("Location:". BASE_URL. 'admin/topics/index.php');
             exit();
         } else {
-            $alertMsg = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            Не удалось создать категорию.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>';
+            $errors[] = $errorsArray['category_update_error'];
         }
     }
+
 }
 
 // удаление категории 

@@ -21,7 +21,7 @@ include BASE_PATH . '/app/include/header-admin.php';
             <div class="row m-3 add-post">
                 <!-- Форма добавления поста -->
                 <form action="create.php" method="post">
-                    <?= $alertMsg; ?>
+                    <?php include BASE_PATH . '/app/helps/errorsinfo.php'; ?>
                     <div class="col mb-2">
                         <input type="text" value="<?= htmlspecialchars($name) ?>" name="name" class="form-control" placeholder="Название категории..." aria-label="Название категории..">
                     </div>

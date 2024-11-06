@@ -21,10 +21,10 @@ include BASE_PATH . '/app/include/header-admin.php';
             <div class="row m-3 add-post">
                 <!-- Форма добавления поста -->
                 <form action="edit.php" method="post">
-                    <?= $alertMsg; ?>
+                    <?php include BASE_PATH . '/app/helps/errorsinfo.php'; ?>
                     <div class="col mb-2">
                         <!-- Добавляем скрытый input откуда мы будем получать id категории -->
-                        <input type="hidden" value="<?php echo $id;?>" name="id">
+                        <input type="hidden" value="<?php echo $id; ?>" name="id">
                         <input type="text" value="<?= htmlspecialchars($name) ?>" name="name" class="form-control" placeholder="Название категории..." aria-label="Название категории..">
                     </div>
                     <div class="col mb-2">
