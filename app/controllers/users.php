@@ -3,9 +3,26 @@
 include  BASE_PATH . '\app\database\db.php';
 
 
+// Получаем всех пользователей с помощью selectAll
+$users = selectAll('users');
+
+$role = 0;
 $errMsg = '';
 $successMsg = '';
 $attemptsAlert = '';
+$loginMinLength = 2;
+
+$errorsArray = [
+    'empty_fields_error' => 'заполните все поля',
+    'login_length_error' => 'длина заголовка должна быть более ' . $loginMinLength . ' символов',
+    'password_match_error' => 'пароли не совпадают',
+    'email_unique_error' => 'такой email уже существует!',
+    'add_user_error' => 'не удалось создать пользователя!',
+    'empty_category_name_error' => 'имя категории не может быть пустым',
+    'user_update_error' => 'не удалось обновить данные пользователя',
+];
+
+$errors = [];
 
 // функция для записи переменных в сессию
 /**
@@ -41,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['button-reg'])) {
     $password_conf = trim($_POST['password-conf']);
     $admin = 0;
 
-    $getUserData = selectAll('users', ['email' => $email]);
+    $getUsersData = selectAll('users', ['email' => $email]);
     if ($login === '' || $email === '' || $password_conf === '') {
         $errMsg = 'Не все поля заполнены';
         // Используем mb_strlen  для определения длины строки
@@ -49,18 +66,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['button-reg'])) {
         $errMsg = 'Логин должен быть более 2 символов';
     } elseif ($pre_pass !== $password_conf) {
         $errMsg = 'Пароли не совпадают';
-    } elseif (!empty($getUserData)) {
+    } elseif (!empty($getUsersData)) {
         $errMsg = 'Такой email уже зарегистрирован';
     } else {
         $password = password_hash($password_conf, PASSWORD_DEFAULT);
-        $post = [
+        $user = [
             'username' => $login,
             'email' => $email,
             'password' => $password,
             'admin' => $admin
         ];
 
-        $id = insert('users', $post);
+        $id = insert('users', $user);
         if ($id) {
             // Получаем данные о только что зарегистрировавшемся юзере
             $user = selectOne('users', ['id' => $id]);
@@ -119,14 +136,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['button-log'])) {
     if ($email === '' || $password === '') {
         $errMsg = 'Не все поля заполнены';
     } else {
-        $getUserData = selectOne('users', ['email' => $email]);
-        if (!empty($getUserData)) {
+        $getUsersData = selectOne('users', ['email' => $email]);
+        if (!empty($getUsersData)) {
             // Сравниваем пароли с формы и пароль в бд
-            if (password_verify($password, $getUserData['password'])) {
+            if (password_verify($password, $getUsersData['password'])) {
                 // Если попытка входа с такой почтой удачна, то сбрасываем счетчик количества попыток;
                 $_SESSION['attempts'][$email] = 0;
                 // Создаем параметры сессии для данного пользователя
-                userAuth($getUserData);
+                userAuth($getUsersData);
             } else {
                 // Надо писать именно в таком стиле чтобы не давать подсказку, что именно неверно
                 $errMsg = 'Почта либо пароль неверны';
@@ -145,3 +162,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['button-log'])) {
 }
 
 
+// Код добавления пользователя через админ панель   
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create-user'])) {
+
+
+    $login = trim($_POST['login']);
+    $email = trim($_POST['email']);
+    $pre_pass = trim($_POST['password']);
+    $password_conf = trim($_POST['password-conf']);
+    $admin = isset($_POST['admin']) ? 1 : 0;
+
+    $getUsersData = selectAll('users', ['email' => $email]);
+
+    // записываем каждую ошибку в массив $errors;
+    if ($login === '' || $email === '' || $password_conf === '') {
+        $errors[] = $errorsArray['empty_fields_error'];
+    }
+
+    // Проверка на минимальную длину логина
+    if (mb_strlen($login, 'UTF8') < $loginMinLength) {
+        $errors[] = $errorsArray['login_length_error'];
+    }
+
+    // Проверка на уникальность email
+    if (!empty($getUsersData)) {
+        $errors[] = $errorsArray['email_unique_error'];
+    }
+
+    // Проверка на соответствие пароля
+    if ($pre_pass !== $password_conf) {
+        $errors[] = $errorsArray['password_match_error'];
+    }
+
+    // Если массив ошибок пуст то вставляем пользователя в бд
+    if (empty($errors)) {
+        $password = password_hash($pre_pass, PASSWORD_DEFAULT);
+        $user = [
+            'username' => $login,
+            'email' => $email,
+            'password' => $password,
+            'admin' => $admin
+        ];
+        $id = insert('users', $user);
+        if ($id) {
+            header("Location:" . BASE_URL . 'admin/users/index.php');
+        } else {
+            $errors[] = $errorsArray['add_user_error'];
+        }
+    }
+} else {
+    // echo 'GET';
+    $login = '';
+    $email = '';
+}
+
+// get user from get request 
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $user = selectOne('users', ['id' => $id]);
+
+    $login = $user['username'];
+    $email = $user['email'];
+    $role = $user['admin'];
+}
+
+// Код изменения пользователя через админ панель
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit-user'])) {
+
+    $id = $_POST['id'];
+    // получаем данные по id, которые нужны для получения текущего статуса пользователя
+    $user = selectOne('users', ['id' => $id]);
+    // получаем текущую почту
+    $currentMail = $user['email'];
+    $login = trim($_POST['login']);
+    $email = trim($_POST['email']);
+    $pre_pass = trim($_POST['password']);
+    $password_conf = trim($_POST['password-conf']);
+    
+    // Устанавливаем роль пользователя в зависимости был отправлен ли чекбокс,
+    // если чекбокс не был отправлен, то устанавливаем роль равную текущей
+    if (isset($_POST['admin'])) {
+        $role = 1;
+    } elseif (isset($_POST['user'])) {
+        $role = 0;
+    } else {
+        $role = $user['admin'];
+    }
+
+    $getUsersData = selectAll('users', ['email' => $email]);
+
+    // записываем каждую ошибку в массив $errors;
+    if ($login === '' || $email === '' || $password_conf === '') {
+        $errors[] = $errorsArray['empty_fields_error'];
+    }
+
+    // Проверка на минимальную длину логина
+    if (mb_strlen($login, 'UTF8') < $loginMinLength) {
+        $errors[] = $errorsArray['login_length_error'];
+    }
+
+    // если email изменился, то проверяем его уникальность
+    if (!empty($getUsersData) && $email !== $currentMail) {
+        $errors[] = $errorsArray['email_unique_error'];
+    }
+
+    // Проверка на соответствие пароля
+    if ($pre_pass !== $password_conf) {
+        $errors[] = $errorsArray['password_match_error'];
+    }
+
+    // Если массив ошибок пуст то вставляем пользователя в бд
+    if (empty($errors)) {
+        $password = password_hash($pre_pass, PASSWORD_DEFAULT);
+        $user = [
+            'username' => $login,
+            'email' => $email,
+            'password' => $password,
+            'admin' => $role
+        ];
+        $updateUser = update($id, 'users', $user);
+        if ($updateUser) {
+            header("Location:" . BASE_URL . 'admin/users/index.php');
+        } else {
+            $errors[] = $errorsArray['update_user_error'];
+        }
+    }
+} 
