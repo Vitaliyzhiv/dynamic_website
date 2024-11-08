@@ -233,14 +233,14 @@ function selectAllFromPostsWithUsers($table1, $table2)
 
     // SQL query to select post details along with the associated username from the users table.
     $sql = "SELECT 
-        t1.id,            // ID of the post
-        t1.title,         // Title of the post
-        t1.img,           // Image URL of the post
-        t1.content,       // Content of the post
-        t1.status,        // Publication status of the post
-        t1.topic_id,      // Associated topic ID of the post
-        t1.created_date,  // Creation date of the post
-        t2.username       // Username of the user who created the post
+        t1.id,            
+        t1.title,       
+        t1.img,           
+        t1.content,      
+        t1.status,        
+        t1.topic_id,      
+        t1.created_date,  
+        t2.username       
         FROM $table1 AS t1 
         JOIN $table2 AS t2 ON t1.id_user = t2.id"; // Join condition based on user ID
 
