@@ -6,3 +6,17 @@ mkdir - создает директорию
 git config --global user.name "Your Name" # Устанавливает глобальное имя пользователя для Git
 git config --global user.email "Your Email" # Устанавливает глобальный адрес электронной почты для Git
 git clone https://github.com/username/repo.git # Клонирование репозитория с GitHub
+git add --all # Добавляет все изменения в Git ( выполнять нужно внутри директории проеэкта)
+git commit -m "message" # Сохраняет изменения в Git
+touch . 'filename'  # Добавляет новый файл в папку проекта.
+git push # Отправляет изменения в Git
+
+<!-- Комманды файла gitignore -->
+# Игнорирование файлов
+file.php
+
+# Игнорирование файл в директории
+css/test.css
+
+# игнорировать файл с расширением:
+.log
