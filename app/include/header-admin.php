@@ -34,7 +34,7 @@
                             <?php if (isset($_SESSION['id'])) : ?>
                                 <a href="#"><i class="fa-solid fa-user"></i> <?= $_SESSION['login'] ?></a>
                                 <ul>
-                                    <li><a href="#">Админ панель</a></li>
+                                    <li><a href="<?php echo BASE_URL . 'admin/posts/' ;?>">Админ панель</a></li>
                         </li>
                     </ul>
                     <li>
