@@ -12,7 +12,7 @@ include BASE_PATH . '/app/include/header-admin.php';
         <div class="posts col-9">
             <div class="button row m-3">
                 <a href="create.php" class="col-2 btn btn-success">Создать</a>
-                <a href="index.php" class="col-2 btn btn-primary">Управлять</a>
+                <a href="<?php echo BASE_URL . 'admin/posts/'; ?>" class="col-2 btn btn-primary">Управлять</a>
             </div>
             <div class="row m-3 title-table">
                 <h2 class="text-center">Управление записями</h2>
@@ -26,7 +26,13 @@ include BASE_PATH . '/app/include/header-admin.php';
             <?php foreach ($postsAdm as $post): ?>
                 <div class="row m-3 post">
                     <div class="id col-1"><?php echo $post['id']; ?></div>
-                    <div class="title col-3"><?php echo $post['title']; ?></div>
+                    <div class="title col-3">
+                        <?php if (strlen($post['title']) > 40): ?>
+                            <?php echo mb_substr($post['title'], 0, 40, 'UTF-8') . '...'; ?>
+                        <?php else: ?>
+                            <?php echo $post['title']; ?>
+                        <?php endif; ?>
+                    </div>
                     <?php //$author = selectOne('users', ['id' => $post['id_user']]);
                     //$author_name = $author['username'];
                     ?>
@@ -40,7 +46,7 @@ include BASE_PATH . '/app/include/header-admin.php';
                     <?php $text_status = $post['status'] == 1 ? "В черновик" : "Опубликовать"; ?>
                     <div class="post-status col-2">
                         <a href="#" data-id="<?php echo $post['id'] ?>" data-status="<?php echo $post['status'] ?>">
-                        <?php echo $text_status; ?>
+                            <?php echo $text_status; ?>
                         </a>
                     </div>
                 </div>

@@ -2,7 +2,7 @@
 // Починаємо сесію
 
 include '../../path.php';
-include  BASE_PATH . '/app/controllers/topics.php';
+include  BASE_PATH . '/app/controllers/posts.php';
 include BASE_PATH . '/app/include/header-admin.php';
 
 ?>
@@ -13,7 +13,7 @@ include BASE_PATH . '/app/include/header-admin.php';
         <div class="posts col-9">
             <div class="button row m-3">
                 <a href="create.php" class="col-2 btn btn-success">Создать </a>
-                <a href="index.php" class="col-2 btn btn-primary">Управление</a>
+                <a href="<?php echo BASE_URL . 'admin/topics/'; ?>" class="col-2 btn btn-primary">Управление</a>
             </div>
             <div class="row m-3 title-table">
                 <h2 class="text-center">Управление категориями</h2>
@@ -26,7 +26,7 @@ include BASE_PATH . '/app/include/header-admin.php';
             <?php $topics = selectAll('topics');
             // Выводим категории листингом  -->
             foreach ($topics as $topic) : ?>
-                <div class="row m-3 post">
+                <div class="row m-3 topic">
                     <div class="id col-1"><?= $topic['id'] ?></div>
                     <div class="title col-5"><?= $topic['name'] ?></div>
                     <div class="actions col-3"><a href="edit.php?id=<?= $topic['id'] ?>"><i class="fa fa-edit text-primary"></i></a></div>
