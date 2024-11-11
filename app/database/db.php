@@ -256,3 +256,24 @@ function selectAllFromPostsWithUsers($table1, $table2)
     // Fetch all results as an associative array and return it.
     return $query->fetchAll();
 }
+
+// Поиск по заголовкам и содержимому (простой)
+function searchInTitleandContent($term, $table1, $table2) {
+    // очисктка поискового запроса от sql иньекций
+    $term = trim(strip_tags(stripslashes(htmlspecialchars($term))));
+
+    global $pdo;
+    $sql = "SELECT 
+    p.*, u.username 
+    FROM $table1 AS p
+    JOIN $table2 AS u ON p.id_user = u.id
+    WHERE p.status=1
+    AND p.title LIKE :term OR p.content LIKE :term";
+    
+    $query = $pdo->prepare($sql);
+    $query->bindValue(':term', '%'. $term. '%');
+    $query->execute();
+    dbCheckError($query);
+    return $query->fetchAll();
+    
+}
